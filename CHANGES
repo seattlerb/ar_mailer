@@ -1,0 +1,37 @@
+= trunk
+
+== Features
+
+* Moved to p4
+
+== Bugs fixed
+
+* Handle SMTPServerBusy by backing off @delay seconds then re-queueing
+
+= 1.1.0
+
+== Features
+
+* Added --chdir to set rails directory
+* Added --environment to set RAILS_ENV
+* Exits cleanly on TERM or INT signals
+* Added FreeBSD rc.d script
+* Exceptions during SMTP sending are now logged
+* No longer waits if sending email took too long
+
+== Bugs fixed
+
+* Fixed last send attempt in --mailq
+* Better SMTP error handling
+  * Messages are removed from the queue on 5xx errors
+  * Added Net::SMTP.reset to avoid needing to recreate the connection
+
+= 1.0.1
+
+== Bugs fixed
+
+* From and to of email destination were swapped
+
+= 1.0.0
+
+* Birthday
