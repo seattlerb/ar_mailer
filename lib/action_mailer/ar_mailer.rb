@@ -36,6 +36,13 @@ require 'action_mailer'
 #   def comment_notification(comment)
 #     from comment.author.email
 # 
+# You'll need to be sure to set the From address for your emails.  Something
+# like:
+#
+#   def list_send(recipient)
+#     from 'no_reply@example.com'
+#     # ...
+# 
 # Edit config/environments/production.rb and set the delivery agent:
 # 
 #   $ grep delivery_method config/environments/production.rb
