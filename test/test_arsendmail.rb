@@ -108,7 +108,7 @@ end
     last = Email.create :from => nobody, :to => 'recip@h2.example.com',
                         :mail => 'body2'
 
-    last.last_send_attempt = Time.parse('Thu Aug 10 11:40:05').to_i
+    last.last_send_attempt = Time.parse('Thu Aug 10 2006 11:40:05').to_i
 
     out, err = util_capture do
       ActionMailer::ARSendmail.mailq
@@ -516,7 +516,7 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
 
   def test_do_exit
     out, err = util_capture do
-      assert_raise Interrupt do
+      assert_raise SystemExit do
         @sm.do_exit
       end
     end

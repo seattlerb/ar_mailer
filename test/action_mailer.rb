@@ -94,7 +94,7 @@ end
 
 class Email
 
-  START = Time.parse 'Thu Aug 10 11:19:48'
+  START = Time.parse 'Thu Aug 10 2006 11:19:48'
 
   attr_accessor :from, :to, :mail, :last_send_attempt, :created_on, :id
 

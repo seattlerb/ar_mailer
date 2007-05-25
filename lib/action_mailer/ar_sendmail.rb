@@ -382,7 +382,7 @@ end
 
   def do_exit
     log "caught signal, shutting down"
-    raise Interrupt
+    exit
   end
 
   ##
