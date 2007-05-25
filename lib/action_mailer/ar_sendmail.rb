@@ -1,6 +1,5 @@
 require 'optparse'
 require 'rubygems'
-require 'action_mailer'
 
 class Object # :nodoc:
   unless respond_to? :path2class then
@@ -25,6 +24,8 @@ class Net::SMTP # :nodoc:
   end
 
 end
+
+module ActionMailer; end # :nodoc:
 
 ##
 # ActionMailer::ARSendmail delivers email from the email table to the
