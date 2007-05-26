@@ -1,7 +1,7 @@
-CHANGES
-LICENSE
+History.txt
+LICENSE.txt
 Manifest.txt
-README
+README.txt
 Rakefile
 bin/ar_sendmail
 lib/action_mailer/ar_mailer.rb
