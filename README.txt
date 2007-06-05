@@ -10,6 +10,10 @@ Documentation:
 
 http://seattlerb.org/ar_mailer
 
+Bugs:
+
+http://rubyforge.org/tracker/?func=add&group_id=1513&atid=5921
+
 == About
 
 Even deliviring email to the local machine may take too long when you have to
