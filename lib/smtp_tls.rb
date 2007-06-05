@@ -6,7 +6,11 @@ require "net/smtp"
 
 # :stopdoc:
 
-Net::SMTP.class_eval do
+class Net::SMTP
+
+  class << self
+    send :remove_method, :start
+  end
 
   def self.start( address, port = nil,
                   helo = 'localhost.localdomain',
@@ -14,6 +18,8 @@ Net::SMTP.class_eval do
                   &block) # :yield: smtp
     new(address, port).start(helo, user, secret, authtype, use_tls, &block)
   end
+
+  alias tls_old_start start
 
   def start( helo = 'localhost.localdomain',
              user = nil, secret = nil, authtype = nil, use_tls = false ) # :yield: smtp
@@ -86,11 +92,14 @@ Net::SMTP.class_eval do
     getok('STARTTLS')
   end
 
+  alias tls_old_quit quit
+
   def quit
     begin
       getok('QUIT')
     rescue EOFError
     end
   end
+
 end unless Net::SMTP.private_method_defined? :do_tls_start or
            Net::SMTP.method_defined? :tls?

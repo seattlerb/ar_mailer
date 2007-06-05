@@ -16,7 +16,7 @@ class Net::SMTP
     attr_reader :send_message_block
     attr_accessor :reset_called
 
-    alias old_start start
+    send :remove_method, :start
 
   end
 
@@ -34,13 +34,13 @@ class Net::SMTP
     @reset_called = 0
   end
 
-  alias old_reset reset if instance_methods.include? 'reset'
+  alias test_old_reset reset if instance_methods.include? 'reset'
 
   def reset
     self.class.reset_called += 1
   end
 
-  alias old_send_message send_message
+  alias test_old_send_message send_message
 
   def send_message(mail, to, from)
     return self.class.send_message_block.call(mail, to, from) unless
