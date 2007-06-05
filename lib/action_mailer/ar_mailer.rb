@@ -67,6 +67,8 @@ require 'action_mailer'
 
 class ActionMailer::ARMailer < ActionMailer::Base
 
+  VERSION = '1.2.0' # :nodoc:
+
   @@email_class = Email
 
   ##
