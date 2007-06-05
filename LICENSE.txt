@@ -1,4 +1,6 @@
-Copyright 2006, Eric Hodel, The Robot Co-op.  All rights reserved.
+Original code copyright 2006, 2007, Eric Hodel, The Robot Co-op.  All
+rights reserved.  Some code under other license, see individual files
+for details.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
