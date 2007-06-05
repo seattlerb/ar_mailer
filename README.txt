@@ -16,7 +16,7 @@ http://rubyforge.org/tracker/?func=add&group_id=1513&atid=5921
 
 == About
 
-Even deliviring email to the local machine may take too long when you have to
+Even delivering email to the local machine may take too long when you have to
 send hundreds of messages.  ar_mailer allows you to store messages into the
 database for later delivery by a separate process, ar_sendmail.
 
