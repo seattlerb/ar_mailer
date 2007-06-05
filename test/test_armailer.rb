@@ -19,7 +19,18 @@ end
 class TestARMailer < Test::Unit::TestCase
 
   def setup
+    Mailer.email_class = Email
+
     Email.records.clear
+    Mail.records.clear
+  end
+
+  def test_self_email_class_equals
+    Mailer.email_class = Mail
+
+    Mailer.deliver_mail
+
+    assert_equal 2, Mail.records.length
   end
 
   def test_perform_delivery_activerecord

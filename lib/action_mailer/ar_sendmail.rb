@@ -1,5 +1,6 @@
 require 'optparse'
 require 'rubygems'
+require 'smtp_tls'
 
 class Object # :nodoc:
   unless respond_to? :path2class then
@@ -71,6 +72,7 @@ class ActionMailer::ARSendmail
   # Creates a new migration using +table_name+ and prints it on stdout.
 
   def self.create_migration(table_name)
+    require 'active_support'
     puts <<-EOF
 class Add#{table_name.classify} < ActiveRecord::Migration
   def self.up
@@ -79,11 +81,12 @@ class Add#{table_name.classify} < ActiveRecord::Migration
       t.column :to, :string
       t.column :last_send_attempt, :integer, :default => 0
       t.column :mail, :text
+      t.column :created_on, :datetime
     end
   end
 
   def self.down
-    drop_table :email
+    drop_table :emails
   end
 end
     EOF
@@ -93,6 +96,7 @@ end
   # Creates a new model using +table_name+ and prints it on stdout.
 
   def self.create_model(table_name)
+    require 'active_support'
     puts <<-EOF
 class #{table_name.classify} < ActiveRecord::Base
 end
@@ -106,8 +110,9 @@ end
   # known.  See http://api.rubyonrails.org/classes/ActiveRecord/Timestamp.html
   # to learn how to enable ActiveRecord::Timestamp.
 
-  def self.mailq
-    emails = Email.find :all
+  def self.mailq(table_name)
+    klass = table_name.split('::').inject(Object) { |k,n| k.const_get n }
+    emails = klass.find :all
 
     if emails.empty? then
       puts "Mail queue is empty"
@@ -286,7 +291,7 @@ end
       create_model options[:TableName]
       exit
     elsif options.include? :MailQ then
-      mailq
+      mailq options[:TableName]
       exit
     end
 
@@ -345,10 +350,12 @@ end
   # Delivers +emails+ to ActionMailer's SMTP server and destroys them.
 
   def deliver(emails)
+    user = server_settings[:user] || server_settings[:user_name]
     Net::SMTP.start server_settings[:address], server_settings[:port],
-                    server_settings[:domain], server_settings[:user],
+                    server_settings[:domain], user,
                     server_settings[:password],
-                    server_settings[:authentication] do |smtp|
+                    server_settings[:authentication],
+                    server_settings[:tls] do |smtp|
       until emails.empty? do
         email = emails.shift
         begin

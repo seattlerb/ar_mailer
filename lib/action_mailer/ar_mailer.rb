@@ -59,8 +59,27 @@ require 'action_mailer'
 # You can also run it from cron with -o, or as a daemon with -d.
 #
 # See <tt>ar_sendmail -h</tt> for full details.
+#
+# If you want to set the ActiveRecord model that emails will be stored in,
+# see ActionMailer::ARMailer::email_class=
 
 class ActionMailer::ARMailer < ActionMailer::Base
+
+  @@email_class = Email
+
+  ##
+  # Current email class for deliveries.
+
+  def self.email_class
+    @@email_class
+  end
+
+  ##
+  # Sets the email class for deliveries.
+
+  def self.email_class=(klass)
+    @@email_class = klass
+  end
 
   ##
   # Adds +mail+ to the Email table.  Only the first From address for +mail+ is
@@ -68,9 +87,8 @@ class ActionMailer::ARMailer < ActionMailer::Base
 
   def perform_delivery_activerecord(mail)
     mail.destinations.each do |destination|
-      Email.create :mail => mail.encoded,
-                   :to => destination,
-                   :from => mail.from.first
+      @@email_class.create :mail => mail.encoded, :to => destination,
+                           :from => mail.from.first
     end
   end
 

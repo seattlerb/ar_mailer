@@ -1,4 +1,5 @@
 require 'net/smtp'
+require 'smtp_tls'
 require 'time'
 
 class Net::SMTP
@@ -144,6 +145,8 @@ class Email
   end
 
 end
+
+Mail = Email
 
 class String
   def classify

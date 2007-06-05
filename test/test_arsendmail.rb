@@ -26,31 +26,6 @@ class TestARSendmail < Test::Unit::TestCase
 
   def test_class_create_migration
     out, = util_capture do
-      ActionMailer::ARSendmail.create_migration 'Email'
-    end
-
-    expected = <<-EOF
-class AddEmail < ActiveRecord::Migration
-  def self.up
-    create_table :email do |t|
-      t.column :from, :string
-      t.column :to, :string
-      t.column :last_send_attempt, :integer, :default => 0
-      t.column :mail, :text
-    end
-  end
-
-  def self.down
-    drop_table :email
-  end
-end
-    EOF
-
-    assert_equal expected, out.string
-  end
-
-  def test_class_create_migration_table_name
-    out, = util_capture do
       ActionMailer::ARSendmail.create_migration 'Mail'
     end
 
@@ -62,11 +37,12 @@ class AddMail < ActiveRecord::Migration
       t.column :to, :string
       t.column :last_send_attempt, :integer, :default => 0
       t.column :mail, :text
+      t.column :created_on, :datetime
     end
   end
 
   def self.down
-    drop_table :email
+    drop_table :emails
   end
 end
     EOF
@@ -75,19 +51,6 @@ end
   end
 
   def test_class_create_model
-    out, = util_capture do
-      ActionMailer::ARSendmail.create_model 'Email'
-    end
-
-    expected = <<-EOF
-class Email < ActiveRecord::Base
-end
-    EOF
-
-    assert_equal expected, out.string
-  end
-
-  def test_class_create_model_table_name
     out, = util_capture do
       ActionMailer::ARSendmail.create_model 'Mail'
     end
@@ -111,7 +74,7 @@ end
     last.last_send_attempt = Time.parse('Thu Aug 10 2006 11:40:05').to_i
 
     out, err = util_capture do
-      ActionMailer::ARSendmail.mailq
+      ActionMailer::ARSendmail.mailq 'Email'
     end
 
     expected = <<-EOF
@@ -134,7 +97,7 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
 
   def test_class_mailq_empty
     out, err = util_capture do
-      ActionMailer::ARSendmail.mailq
+      ActionMailer::ARSendmail.mailq 'Email'
     end
 
     assert_equal "Mail queue is empty\n", out.string
@@ -481,7 +444,7 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
       @sm.deliver [email1, email2]
     end
 
-    assert_equal 1, Net::SMTP.deliveries.length
+    assert_equal 1, Net::SMTP.deliveries.length, 'delivery count'
     assert_equal 1, Email.records.length
     assert_equal 1, Net::SMTP.reset_called, 'Reset connection on SyntaxError'
     assert_operator now, :<=, Email.records.first.last_send_attempt

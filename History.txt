@@ -3,12 +3,16 @@
 == Bugs fixed
 
 * Handle SMTPServerBusy by backing off @delay seconds then re-queueing
+* Allow email delivery class to be set in ARMailer.
+* ar_sendmail --mailq works with --table-name now.
 
 == Miscellaneous Updates
 
 * Added documentation to require 'action_mailer/ar_mailer' in
   instructions.
 * Moved to ZSS p4 repository
+* Supports TLS now.  Requested by Dave Thomas. smtp_tls.rb from Kyle
+  Maxwell & etc.
 
 = 1.1.0
 
