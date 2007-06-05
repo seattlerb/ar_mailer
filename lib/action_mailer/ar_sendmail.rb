@@ -1,6 +1,7 @@
 require 'optparse'
-require 'rubygems'
+require 'net/smtp'
 require 'smtp_tls'
+require 'rubygems'
 
 class Object # :nodoc:
   unless respond_to? :path2class then
@@ -13,7 +14,8 @@ end
 ##
 # Hack in RSET
 
-class Net::SMTP # :nodoc:
+module Net # :nodoc:
+class SMTP # :nodoc:
 
   unless instance_methods.include? 'reset' then
     ##
@@ -25,12 +27,18 @@ class Net::SMTP # :nodoc:
   end
 
 end
+end
 
 module ActionMailer; end # :nodoc:
 
 ##
 # ActionMailer::ARSendmail delivers email from the email table to the
-# configured SMTP server.
+# SMTP server configured in your application's config/environment.rb.
+# ar_sendmail does not work with sendmail delivery.
+#
+# ar_mailer can deliver to SMTP with TLS using smtp_tls.rb borrowed from Kyle
+# Maxwell's action_mailer_optional_tls plugin.  Simply set the :tls option in
+# ActionMailer::Base's smtp_settings to true to enable TLS.
 #
 # See ar_sendmail -h for the full list of supported options.
 #

@@ -60,6 +60,8 @@ require 'action_mailer'
 #
 # See <tt>ar_sendmail -h</tt> for full details.
 #
+# == Alternate Mail Storage
+#
 # If you want to set the ActiveRecord model that emails will be stored in,
 # see ActionMailer::ARMailer::email_class=
 

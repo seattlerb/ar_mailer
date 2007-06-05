@@ -4,6 +4,8 @@
 require "openssl"
 require "net/smtp"
 
+# :stopdoc:
+
 Net::SMTP.class_eval do
 
   def self.start( address, port = nil,

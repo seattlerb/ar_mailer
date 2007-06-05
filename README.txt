@@ -1,12 +1,14 @@
 = ar_mailer
 
+A two-phase delivery agent for ActionMailer
+
 Rubyforge Project:
 
-http://rubyforge.org/projects/rctools
+http://rubyforge.org/projects/seattlerb
 
 Documentation:
 
-http://dev.robotcoop.com/Tools/ar_mailer
+http://seattlerb.org/ar_mailer
 
 == About
 

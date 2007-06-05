@@ -6,6 +6,7 @@ Rakefile
 bin/ar_sendmail
 lib/action_mailer/ar_mailer.rb
 lib/action_mailer/ar_sendmail.rb
+lib/smtp_tls.rb
 share/ar_sendmail
 test/action_mailer.rb
 test/test_armailer.rb

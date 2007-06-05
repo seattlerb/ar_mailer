@@ -1,9 +1,11 @@
 require 'hoe'
 
 Hoe.new 'ar_mailer', '1.2.0' do |s|
-  s.summary = 'A two-phase deliver agent for ActionMailer'
-  s.description = 'Queues emails from ActionMailer in the database and uses a separate process to send them.  Reduces sending overhead when sending hundreds of emails.'
+  s.summary = s.paragraphs_of('README.txt', 1).join(' ')
+  s.description = s.paragraphs_of('README.txt', 7).join(' ')
+  s.url = s.paragraphs_of('README.txt', 5).join(' ')
   s.author = 'Eric Hodel'
   s.email = 'drbrain@segment7.net'
+  s.changes = s.paragraphs_of('History.txt', 0..1).join("\n\n")
 end
 
