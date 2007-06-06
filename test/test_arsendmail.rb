@@ -334,6 +334,60 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
     assert_equal "sent email 00000000001 from from to to: \"queued\"\n", err.string
   end
 
+  def test_deliver_auth_error
+    Net::SMTP.on_start do
+      e = Net::SMTPAuthenticationError.new 'try again'
+      e.set_backtrace %w[one two three]
+      raise e
+    end
+
+    now = Time.now.to_i
+
+    email = Email.create :mail => 'body', :to => 'to', :from => 'from'
+
+    out, err = util_capture do
+      @sm.deliver [email]
+    end
+
+    assert_equal 0, Net::SMTP.deliveries.length
+    assert_equal 1, Email.records.length
+    assert_equal 0, Email.records.first.last_send_attempt
+    assert_equal 0, Net::SMTP.reset_called
+    assert_equal 1, @sm.failed_auth_count
+
+    assert_equal '', out.string
+    assert_equal "authentication error, retrying: try again\n", err.string
+  end
+
+  def test_deliver_auth_error_recover
+    email = Email.create :mail => 'body', :to => 'to', :from => 'from'
+    @sm.failed_auth_count = 1
+
+    out, err = util_capture do @sm.deliver [email] end
+
+    assert_equal 0, @sm.failed_auth_count
+    assert_equal 1, Net::SMTP.deliveries.length
+  end
+
+  def test_deliver_auth_error_twice
+    Net::SMTP.on_start do
+      e = Net::SMTPAuthenticationError.new 'try again'
+      e.set_backtrace %w[one two three]
+      raise e
+    end
+
+    @sm.failed_auth_count = 1
+
+    out, err = util_capture do
+      assert_raise Net::SMTPAuthenticationError do
+        @sm.deliver []
+      end
+    end
+
+    assert_equal 2, @sm.failed_auth_count
+    assert_equal "authentication error, giving up: try again\n", err.string
+  end
+
   def test_deliver_4xx_error
     Net::SMTP.on_send_message do
       e = Net::SMTPSyntaxError.new 'try again'

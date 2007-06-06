@@ -52,6 +52,11 @@ module ActionMailer; end # :nodoc:
 class ActionMailer::ARSendmail
 
   ##
+  # Maximum number of times authentication will be consecutively retried
+
+  MAX_AUTH_FAILURES = 2
+
+  ##
   # Email delivery attempts per run
 
   attr_accessor :batch_size
@@ -75,6 +80,11 @@ class ActionMailer::ARSendmail
   # True if only one delivery attempt will be made per call to run
 
   attr_reader :once
+
+  ##
+  # Times authentication has failed
+
+  attr_accessor :failed_auth_count
 
   ##
   # Creates a new migration using +table_name+ and prints it on stdout.
@@ -352,6 +362,8 @@ end
     @email_class = Object.path2class options[:TableName]
     @once = options[:Once]
     @verbose = options[:Verbose]
+
+    @failed_auth_count = 0
   end
 
   ##
@@ -364,6 +376,7 @@ end
                     server_settings[:password],
                     server_settings[:authentication],
                     server_settings[:tls] do |smtp|
+      @failed_auth_count = 0
       until emails.empty? do
         email = emails.shift
         begin
@@ -380,7 +393,7 @@ end
           log "server too busy, sleeping #{@delay} seconds"
           sleep delay unless $TESTING
           return
-        rescue Net::SMTPServerBusy, Net::SMTPUnknownError, Net::SMTPSyntaxError, TimeoutError => e
+        rescue Net::SMTPUnknownError, Net::SMTPSyntaxError, TimeoutError => e
           email.last_send_attempt = Time.now.to_i
           email.save rescue nil
           log "error sending email %d: %p(%s):\n\t%s" %
@@ -389,6 +402,15 @@ end
         end
       end
     end
+  rescue Net::SMTPAuthenticationError => e
+    @failed_auth_count += 1
+    if @failed_auth_count >= MAX_AUTH_FAILURES then
+      log "authentication error, giving up: #{e.message}"
+      raise e
+    else
+      log "authentication error, retrying: #{e.message}"
+    end
+    sleep delay unless $TESTING
   rescue Net::SMTPServerBusy, SystemCallError
     # ignore SMTPServerBusy/EPIPE/ECONNRESET from Net::SMTP.start's ensure
   end

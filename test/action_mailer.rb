@@ -10,6 +10,8 @@ class Net::SMTP
 
   @send_message_block = nil
 
+  @start_block = nil
+
   class << self
 
     attr_reader :deliveries
@@ -21,6 +23,7 @@ class Net::SMTP
   end
 
   def self.start(*args)
+    @start_block.call if @start_block
     yield new(nil)
   end
 
@@ -28,8 +31,13 @@ class Net::SMTP
     @send_message_block = block
   end
 
+  def self.on_start(&block)
+    @start_block = block
+  end
+
   def self.reset
     deliveries.clear
+    on_start
     on_send_message
     @reset_called = 0
   end
