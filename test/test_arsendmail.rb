@@ -4,7 +4,13 @@ require 'action_mailer/ar_sendmail'
 require 'rubygems'
 require 'test/zentest_assertions'
 
-$TESTING = true
+class ActionMailer::ARSendmail
+  attr_accessor :slept
+  def sleep(secs)
+    @slept ||= []
+    @slept << secs
+  end
+end
 
 class TestARSendmail < Test::Unit::TestCase
 
@@ -354,6 +360,7 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
     assert_equal 0, Email.records.first.last_send_attempt
     assert_equal 0, Net::SMTP.reset_called
     assert_equal 1, @sm.failed_auth_count
+    assert_equal [60], @sm.slept
 
     assert_equal '', out.string
     assert_equal "authentication error, retrying: try again\n", err.string
@@ -476,6 +483,7 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
     assert_equal 1, Email.records.length
     assert_operator now, :>=, Email.records.first.last_send_attempt
     assert_equal 0, Net::SMTP.reset_called, 'Reset connection on SyntaxError'
+    assert_equal [60], @sm.slept
 
     assert_equal '', out.string
     assert_equal "server too busy, sleeping 60 seconds\n", err.string

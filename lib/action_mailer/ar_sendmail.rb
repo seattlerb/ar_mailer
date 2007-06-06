@@ -391,7 +391,7 @@ end
           smtp.reset
         rescue Net::SMTPServerBusy => e
           log "server too busy, sleeping #{@delay} seconds"
-          sleep delay unless $TESTING
+          sleep delay
           return
         rescue Net::SMTPUnknownError, Net::SMTPSyntaxError, TimeoutError => e
           email.last_send_attempt = Time.now.to_i
@@ -410,7 +410,7 @@ end
     else
       log "authentication error, retrying: #{e.message}"
     end
-    sleep delay unless $TESTING
+    sleep delay
   rescue Net::SMTPServerBusy, SystemCallError
     # ignore SMTPServerBusy/EPIPE/ECONNRESET from Net::SMTP.start's ensure
   end
