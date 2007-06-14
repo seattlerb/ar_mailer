@@ -52,6 +52,11 @@ module ActionMailer; end # :nodoc:
 class ActionMailer::ARSendmail
 
   ##
+  # The version of ActionMailer::ARSendmail you are running.
+
+  VERSION = '1.3.0'
+
+  ##
   # Maximum number of times authentication will be consecutively retried
 
   MAX_AUTH_FAILURES = 2
@@ -65,6 +70,11 @@ class ActionMailer::ARSendmail
   # Seconds to delay between runs
 
   attr_accessor :delay
+
+  ##
+  # Maximum age of emails in seconds before they are removed from the queue.
+
+  attr_accessor :max_age
 
   ##
   # Be verbose
@@ -144,8 +154,8 @@ end
       size = email.mail.length
       total_size += size
 
-      create_timestamp = email.created_at rescue
-                         email.created_on rescue
+      create_timestamp = email.created_on rescue
+                         email.created_at rescue
                          Time.at(email.created_date) rescue # for Robot Co-op
                          nil
 
@@ -173,12 +183,13 @@ end
     name = File.basename $0
 
     options = {}
+    options[:Chdir] = '.'
     options[:Daemon] = false
     options[:Delay] = 60
+    options[:MaxAge] = 86400 * 7
     options[:Once] = false
-    options[:TableName] = 'Email'
-    options[:Chdir] = '.'
     options[:RailsEnv] = ENV['RAILS_ENV']
+    options[:TableName] = 'Email'
 
     opts = OptionParser.new do |opts|
       opts.banner = "Usage: #{name} [options]"
@@ -203,6 +214,14 @@ end
               "in the database",
               "Default: #{options[:Delay]}", Integer) do |delay|
         options[:Delay] = delay
+      end
+
+      opts.on(      "--max-age MAX_AGE",
+              "Maxmimum age for an email. After this",
+              "it will be removed from the queue.",
+              "Set to 0 to disable queue cleanup.",
+              "Default: #{options[:MaxAge]} seconds", Integer) do |max_age|
+        options[:MaxAge] = max_age
       end
 
       opts.on("-o", "--once",
@@ -356,14 +375,29 @@ end
   def initialize(options = {})
     options[:Delay] ||= 60
     options[:TableName] ||= 'Email'
+    options[:MaxAge] ||= 86400 * 7
 
     @batch_size = options[:BatchSize]
     @delay = options[:Delay]
     @email_class = Object.path2class options[:TableName]
     @once = options[:Once]
     @verbose = options[:Verbose]
+    @max_age = options[:MaxAge]
 
     @failed_auth_count = 0
+  end
+
+  ##
+  # Removes emails that have lived in the queue for too long.  If max_age is
+  # set to 0, no emails will be removed.
+
+  def cleanup
+    return if @max_age == 0
+    timeout = Time.now - @max_age
+    conditions = ['last_send_attempt > 0 and created_on < ?', timeout]
+    mail = @email_class.destroy_all conditions
+
+    log "expired #{mail.length} emails from the queue"
   end
 
   ##
@@ -462,6 +496,7 @@ end
     loop do
       now = Time.now
       begin
+        cleanup
         deliver find_emails
       rescue ActiveRecord::Transactions::TransactionError
       end

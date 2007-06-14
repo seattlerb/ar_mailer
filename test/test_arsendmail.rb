@@ -212,6 +212,17 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
     assert_equal true, options[:MailQ]
   end
 
+  def test_class_parse_args_max_age
+    options = ActionMailer::ARSendmail.process_args []
+    assert_equal 86400 * 7, options[:MaxAge]
+
+    argv = %w[--max-age 86400]
+
+    options = ActionMailer::ARSendmail.process_args argv
+
+    assert_equal 86400, options[:MaxAge]
+  end
+
   def test_class_parse_args_migration
     options = ActionMailer::ARSendmail.process_args []
     deny_includes :Migration, options
@@ -322,6 +333,39 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
 
     assert_equal '', out.string
     assert_equal "hi\n\nopts\n", err.string
+  end
+
+  def test_cleanup
+    e1 = Email.create :mail => 'body', :to => 'to', :from => 'from'
+    e1.created_on = Time.now
+    e2 = Email.create :mail => 'body', :to => 'to', :from => 'from'
+    e3 = Email.create :mail => 'body', :to => 'to', :from => 'from'
+    e3.last_send_attempt = Time.now
+
+    out, err = util_capture do
+      @sm.cleanup
+    end
+
+    assert_equal '', out.string
+    assert_equal "expired 1 emails from the queue\n", err.string
+    assert_equal 2, Email.records.length
+
+    assert_equal [e1, e2], Email.records
+  end
+
+  def test_cleanup_disabled
+    e1 = Email.create :mail => 'body', :to => 'to', :from => 'from'
+    e1.created_on = Time.now
+    e2 = Email.create :mail => 'body', :to => 'to', :from => 'from'
+
+    @sm.max_age = 0
+
+    out, err = util_capture do
+      @sm.cleanup
+    end
+
+    assert_equal '', out.string
+    assert_equal 2, Email.records.length
   end
 
   def test_deliver

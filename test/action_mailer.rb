@@ -113,9 +113,25 @@ class Email
   class << self; attr_accessor :records, :id; end
 
   def self.create(record)
-    record = new record[:from], record[:to], record[:mail]
+    record = new record[:from], record[:to], record[:mail],
+                 record[:last_send_attempt]
     records << record
     return record
+  end
+
+  def self.destroy_all(conditions)
+    timeout = conditions.last
+    found = []
+
+    records.each do |record|
+      next if record.last_send_attempt == 0
+      next if record.created_on == 0
+      next unless record.created_on < timeout
+      record.destroy
+      found << record
+    end
+
+    found
   end
 
   def self.find(_, conditions = nil)
@@ -131,13 +147,13 @@ class Email
     records.clear
   end
 
-  def initialize(from, to, mail)
+  def initialize(from, to, mail, last_send_attempt = nil)
     @from = from
     @to = to
     @mail = mail
     @id = self.class.id += 1
     @created_on = START + @id
-    @last_send_attempt = 0
+    @last_send_attempt = last_send_attempt || 0
   end
 
   def destroy

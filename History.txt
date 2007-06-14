@@ -1,5 +1,9 @@
-= 1.2.1
+= 1.3.0
 
+* New Features
+  * Added automatic mail queue cleanup.
+    * MAY CAUSE LOSS OF DATA.  If you haven't run ar_sendmail within
+      the expiry time, set it to 0.
 * Bugs fixed
   * Authentication errors are now handled by retrying once.
 
