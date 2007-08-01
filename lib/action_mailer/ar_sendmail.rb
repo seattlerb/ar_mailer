@@ -114,7 +114,7 @@ class Add#{table_name.classify} < ActiveRecord::Migration
   end
 
   def self.down
-    drop_table :emails
+    drop_table :#{table_name.tableize}
   end
 end
     EOF
@@ -506,9 +506,12 @@ end
   end
 
   ##
-  # Proxy to ActionMailer::Base#smtp_settings.  See
+  # Proxy to ActionMailer::Base::smtp_settings.  See
   # http://api.rubyonrails.org/classes/ActionMailer/Base.html
   # for instructions on how to configure ActionMailer's SMTP server.
+  #
+  # Falls back to ::server_settings if ::smtp_settings doesn't exist for
+  # backwards compatibility.
 
   def smtp_settings
     ActionMailer::Base.smtp_settings rescue ActionMailer::Base.server_settings

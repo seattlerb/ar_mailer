@@ -48,7 +48,7 @@ class AddMail < ActiveRecord::Migration
   end
 
   def self.down
-    drop_table :emails
+    drop_table :mail
   end
 end
     EOF

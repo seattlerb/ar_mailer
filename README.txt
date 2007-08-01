@@ -30,6 +30,9 @@ See ActionMailer::ARMailer for instructions on converting to ARMailer.
 
 See ar_sendmail -h for options to ar_sendmail.
 
+NOTE: You may need to delete an smtp_tls.rb file if you have one lying
+around.  ar_mailer supplies it own.
+
 === ar_sendmail on FreeBSD or NetBSD
 
 An rc.d script is included in share/ar_sendmail.
