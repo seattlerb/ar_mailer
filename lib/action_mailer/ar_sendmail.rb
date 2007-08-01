@@ -54,7 +54,7 @@ class ActionMailer::ARSendmail
   ##
   # The version of ActionMailer::ARSendmail you are running.
 
-  VERSION = '1.3.0'
+  VERSION = '1.3.1'
 
   ##
   # Maximum number of times authentication will be consecutively retried
@@ -404,12 +404,12 @@ end
   # Delivers +emails+ to ActionMailer's SMTP server and destroys them.
 
   def deliver(emails)
-    user = server_settings[:user] || server_settings[:user_name]
-    Net::SMTP.start server_settings[:address], server_settings[:port],
-                    server_settings[:domain], user,
-                    server_settings[:password],
-                    server_settings[:authentication],
-                    server_settings[:tls] do |smtp|
+    user = smtp_settings[:user] || smtp_settings[:user_name]
+    Net::SMTP.start smtp_settings[:address], smtp_settings[:port],
+                    smtp_settings[:domain], user,
+                    smtp_settings[:password],
+                    smtp_settings[:authentication],
+                    smtp_settings[:tls] do |smtp|
       @failed_auth_count = 0
       until emails.empty? do
         email = emails.shift
@@ -445,7 +445,7 @@ end
       log "authentication error, retrying: #{e.message}"
     end
     sleep delay
-  rescue Net::SMTPServerBusy, SystemCallError
+  rescue Net::SMTPServerBusy, SystemCallError, OpenSSL::SSL::SSLError
     # ignore SMTPServerBusy/EPIPE/ECONNRESET from Net::SMTP.start's ensure
   end
 
@@ -506,12 +506,12 @@ end
   end
 
   ##
-  # Proxy to ActionMailer::Base#server_settings.  See
+  # Proxy to ActionMailer::Base#smtp_settings.  See
   # http://api.rubyonrails.org/classes/ActionMailer/Base.html
   # for instructions on how to configure ActionMailer's SMTP server.
 
-  def server_settings
-    ActionMailer::Base.server_settings
+  def smtp_settings
+    ActionMailer::Base.smtp_settings rescue ActionMailer::Base.server_settings
   end
 
 end

@@ -628,10 +628,10 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
     assert_equal "found 3 emails to send\n", err.string
   end
 
-  def test_server_settings
+  def test_smtp_settings
     ActionMailer::Base.server_settings[:address] = 'localhost'
 
-    assert_equal 'localhost', @sm.server_settings[:address]
+    assert_equal 'localhost', @sm.smtp_settings[:address]
   end
 
   def nobody
