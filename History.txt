@@ -4,6 +4,7 @@
   state.  Issue by Eric O'Connell.
 * Switched to minitest
 * Upgraded to modern Hoe
+* Updated configuration information for Rails > 2.0
 
 = 1.3.1
 

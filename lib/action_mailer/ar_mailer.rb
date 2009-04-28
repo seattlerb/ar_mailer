@@ -50,6 +50,11 @@ require 'action_mailer'
 # Edit config/environments/production.rb and set the delivery agent:
 #
 #   $ grep delivery_method config/environments/production.rb
+#   config.action_mailer.delivery_method = :activerecord
+#
+# For Rails 1.x and older:
+#
+#   $ grep delivery_method config/environments/production.rb
 #   ActionMailer::Base.delivery_method = :activerecord
 #
 # Run ar_sendmail:
