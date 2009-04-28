@@ -1,6 +1,7 @@
-require 'test/unit'
 require 'action_mailer'
 require 'action_mailer/ar_mailer'
+require 'rubygems'
+require 'minitest/autorun'
 
 ##
 # Pretend mailer
@@ -16,7 +17,7 @@ class Mailer < ActionMailer::ARMailer
 
 end
 
-class TestARMailer < Test::Unit::TestCase
+class TestARMailer < MiniTest::Unit::TestCase
 
   def setup
     Mailer.email_class = Email

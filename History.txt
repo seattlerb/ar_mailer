@@ -2,6 +2,8 @@
 
 * Terminate SMTP connection on TimeoutError since Net::SMTP may be in a bogus
   state.  Issue by Eric O'Connell.
+* Switched to minitest
+* Upgraded to modern Hoe
 
 = 1.3.1
 
