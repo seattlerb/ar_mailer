@@ -54,7 +54,7 @@ class ActionMailer::ARSendmail
   ##
   # The version of ActionMailer::ARSendmail you are running.
 
-  VERSION = '1.3.1'
+  VERSION = '1.3.2'
 
   ##
   # Maximum number of times authentication will be consecutively retried
@@ -432,6 +432,9 @@ end
           email.save rescue nil
           log "error sending email %d: %p(%s):\n\t%s" %
                 [email.id, e.message, e.class, e.backtrace.join("\n\t")]
+
+          raise e if TimeoutError === e
+
           smtp.reset
         end
       end
@@ -447,6 +450,9 @@ end
     sleep delay
   rescue Net::SMTPServerBusy, SystemCallError, OpenSSL::SSL::SSLError
     # ignore SMTPServerBusy/EPIPE/ECONNRESET from Net::SMTP.start's ensure
+  rescue TimeoutError
+    # terminate our connection since Net::SMTP may be in a bogus state.
+    sleep delay
   end
 
   ##

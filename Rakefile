@@ -1,6 +1,7 @@
 require 'hoe'
 
-require './lib/action_mailer/ar_sendmail'
+$:.unshift 'lib'
+require 'action_mailer/ar_sendmail'
 
 Hoe.new 'ar_mailer', ActionMailer::ARSendmail::VERSION do |s|
   s.rubyforge_name = 'seattlerb'
