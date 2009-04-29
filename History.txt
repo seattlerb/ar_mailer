@@ -2,6 +2,7 @@
 
 * Terminate SMTP connection on TimeoutError since Net::SMTP may be in a bogus
   state.  Issue by Eric O'Connell.
+* Don't require Email class to exist.  Bug #22843 by Joachim Glauche.
 * Switched to minitest
 * Upgraded to modern Hoe
 * Updated configuration information for Rails > 2.0
