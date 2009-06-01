@@ -32,7 +32,7 @@ require 'action_mailer'
 #   @@ -1,4 +1,4 @@
 #   -class Emailer < ActionMailer::Base
 #   +class Emailer < ActionMailer::ARMailer
-#    
+#   
 #   def comment_notification(comment)
 #     from comment.author.email
 #
@@ -86,6 +86,20 @@ class ActionMailer::ARMailer < ActionMailer::Base
 
   def self.email_class=(klass)
     @email_class = klass
+  end
+
+  ##
+  # Hack around class_inheritable_accessor being lame
+
+  def self.view_paths # :nodoc:
+    superclass.view_paths
+  end
+
+  ##
+  # Hack around class_inheritable_accessor being lame
+
+  def self.view_paths=(path) # :nodoc:
+    superclass.view_paths = path
   end
 
   ##
