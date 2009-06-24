@@ -91,7 +91,7 @@ end
                                          recip@h1.example.com
 
          3        5 Thu Aug 10 11:19:51  nobody@example.com
-Last send attempt: Thu Aug 10 11:40:05 -0700 2006
+Last send attempt: Thu Aug 10 11:40:05 2006
                                          recip@h2.example.com
 
 -- 0 Kbytes in 3 Requests.
@@ -608,7 +608,7 @@ Last send attempt: Thu Aug 10 11:40:05 -0700 2006
       { :mail => 'body2', :to => 'recip@h2.example.com', :from => nobody },
     ]
 
-    emails = email_data.map do |email_data| Email.create email_data end
+    emails = email_data.map do |email| Email.create email end
 
     tried = Email.create :mail => 'body3', :to => 'recip@h3.example.com',
                          :from => nobody

@@ -1,12 +1,11 @@
 require 'hoe'
 
-$:.unshift 'lib'
-require 'action_mailer/ar_sendmail'
+Hoe.plugin :seattlerb
 
-Hoe.new 'ar_mailer', ActionMailer::ARSendmail::VERSION do |ar_mailer|
-  ar_mailer.rubyforge_name = 'seattlerb'
-  ar_mailer.developer 'Eric Hodel', 'drbrain@segment7.net'
-  ar_mailer.testlib = :minitest
-  ar_mailer.extra_dev_deps << ['minitest', '~> 1.3']
+Hoe.spec 'ar_mailer' do
+  self.rubyforge_name = 'seattlerb'
+  developer 'Eric Hodel', 'drbrain@segment7.net'
+
+  extra_dev_deps << ['minitest', '~> 1.3']
 end
 

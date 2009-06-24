@@ -17,14 +17,8 @@ class Net::SMTP
     attr_reader :deliveries
     attr_reader :send_message_block
     attr_accessor :reset_called
+    attr_accessor :start_block
 
-    send :remove_method, :start
-
-  end
-
-  def self.start(*args)
-    @start_block.call if @start_block
-    yield new(nil)
   end
 
   def self.on_send_message(&block)
@@ -40,6 +34,13 @@ class Net::SMTP
     on_start
     on_send_message
     @reset_called = 0
+  end
+
+  alias test_old_start start
+
+  def start(*args)
+    self.class.start_block.call if self.class.start_block
+    yield self
   end
 
   alias test_old_reset reset if instance_methods.include? 'reset'

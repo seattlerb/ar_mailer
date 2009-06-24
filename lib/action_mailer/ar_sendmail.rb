@@ -1,7 +1,11 @@
 require 'optparse'
 require 'net/smtp'
-require 'smtp_tls'
 require 'rubygems'
+begin
+  require 'smtp_tls'
+rescue LoadError
+  # only for 1.8.6 versions
+end
 
 class Object # :nodoc:
   unless respond_to? :path2class then
@@ -14,20 +18,16 @@ end
 ##
 # Hack in RSET
 
-module Net # :nodoc:
-class SMTP # :nodoc:
+class Net::SMTP
 
-  unless instance_methods.include? 'reset' then
-    ##
-    # Resets the SMTP connection.
+  ##
+  # Resets the SMTP connection.
 
-    def reset
-      getok 'RSET'
-    end
+  def reset
+    getok 'RSET'
   end
 
-end
-end
+end unless Net::SMTP.method_defined? :reset
 
 module ActionMailer; end # :nodoc:
 
@@ -36,9 +36,8 @@ module ActionMailer; end # :nodoc:
 # SMTP server configured in your application's config/environment.rb.
 # ar_sendmail does not work with sendmail delivery.
 #
-# ar_mailer can deliver to SMTP with TLS using smtp_tls.rb borrowed from Kyle
-# Maxwell's action_mailer_optional_tls plugin.  Simply set the :tls option in
-# ActionMailer::Base's smtp_settings to true to enable TLS.
+# ar_mailer can deliver to SMTP with TLS using the smtp_tls gem Set the :tls
+# option in ActionMailer::Base's smtp_settings to true to enable TLS.
 #
 # See ar_sendmail -h for the full list of supported options.
 #
@@ -54,7 +53,7 @@ class ActionMailer::ARSendmail
   ##
   # The version of ActionMailer::ARSendmail you are running.
 
-  VERSION = '1.3.3'
+  VERSION = '1.4.0'
 
   ##
   # Maximum number of times authentication will be consecutively retried
@@ -167,7 +166,8 @@ end
 
       puts "%10d %8d %s  %s" % [email.id, size, created, email.from]
       if email.last_send_attempt > 0 then
-        puts "Last send attempt: #{Time.at email.last_send_attempt}"
+        last_send_attempt = Time.at email.last_send_attempt
+        puts "Last send attempt: #{last_send_attempt.asctime}"
       end
       puts "                                         #{email.to}"
       puts
@@ -191,7 +191,7 @@ end
     options[:RailsEnv] = ENV['RAILS_ENV']
     options[:TableName] = 'Email'
 
-    opts = OptionParser.new do |opts|
+    op = OptionParser.new do |opts|
       opts.banner = "Usage: #{name} [options]"
       opts.separator ''
 
@@ -277,8 +277,8 @@ end
               "Name of table holding emails",
               "Used for both sendmail and",
               "migration creation",
-              "Default: #{options[:TableName]}") do |name|
-        options[:TableName] = name
+              "Default: #{options[:TableName]}") do |table_name|
+        options[:TableName] = table_name
       end
 
       opts.on("-v", "--[no-]verbose",
@@ -295,7 +295,7 @@ end
       opts.separator ''
     end
 
-    opts.parse! args
+    op.parse! args
 
     return options if options.include? :Migrate or options.include? :Model
 
@@ -305,7 +305,7 @@ end
       begin
         require 'config/environment'
       rescue LoadError
-        usage opts, <<-EOF
+        usage op, <<-EOF
 #{name} must be run from a Rails application's root to deliver email.
 #{Dir.pwd} does not appear to be a Rails application root.
           EOF
@@ -405,11 +405,14 @@ end
 
   def deliver(emails)
     user = smtp_settings[:user] || smtp_settings[:user_name]
-    Net::SMTP.start smtp_settings[:address], smtp_settings[:port],
-                    smtp_settings[:domain], user,
-                    smtp_settings[:password],
-                    smtp_settings[:authentication],
-                    smtp_settings[:tls] do |smtp|
+    server = Net::SMTP.new smtp_settings[:address], smtp_settings[:port]
+    server.start smtp_settings[:domain], user, smtp_settings[:password],
+                 smtp_settings[:authentication] do |smtp|
+      if smtp_settings[:tls] then
+        raise 'gem install smtp_tls for 1.8.6' unless
+          server.respond_to? :starttls
+        smtp.enable_starttls
+      end
       @failed_auth_count = 0
       until emails.empty? do
         email = emails.shift
