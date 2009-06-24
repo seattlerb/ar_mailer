@@ -1,6 +1,7 @@
 require 'optparse'
 require 'net/smtp'
 require 'rubygems'
+require 'openssl'
 begin
   require 'smtp_tls'
 rescue LoadError

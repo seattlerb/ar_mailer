@@ -1,5 +1,8 @@
 require 'net/smtp'
-require 'smtp_tls'
+begin
+  require 'smtp_tls'
+rescue LoadError
+end
 require 'time'
 
 class Net::SMTP
