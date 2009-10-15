@@ -54,7 +54,7 @@ class ActionMailer::ARSendmail
   ##
   # The version of ActionMailer::ARSendmail you are running.
 
-  VERSION = '1.4.0'
+  VERSION = '1.5.0'
 
   ##
   # Maximum number of times authentication will be consecutively retried
@@ -95,6 +95,26 @@ class ActionMailer::ARSendmail
   # Times authentication has failed
 
   attr_accessor :failed_auth_count
+
+  ##
+  # Checks and writes +pid_file+, aborting if it already exists or this
+  # process loses the pid-writing race.
+
+  def self.check_pid(pid_file)
+    if File.exist? pid_file then
+      abort "pid file exists at #{pid_file}, exiting"
+    else
+      open pid_file, 'w', 0644 do |io|
+        io.write $$
+      end
+
+      written_pid = File.read pid_file
+
+      if written_pid.to_i != $$ then
+        abort "pid #{written_pid} from #{pid_file} doesn't match $$ #{$$}, exiting"
+      end
+    end
+  end
 
   ##
   # Creates a new migration using +table_name+ and prints it on stdout.
@@ -193,13 +213,21 @@ end
     options[:TableName] = 'Email'
 
     op = OptionParser.new do |opts|
-      opts.banner = "Usage: #{name} [options]"
-      opts.separator ''
+      opts.program_name = name
+      opts.version = VERSION
 
-      opts.separator "#{name} scans the email table for new messages and sends them to the"
-      opts.separator "website's configured SMTP host."
-      opts.separator ''
-      opts.separator "#{name} must be run from a Rails application's root."
+      opts.banner = <<-BANNER
+Usage: #{name} [options]
+
+#{name} scans the email table for new messages and sends them to the
+website's configured SMTP host.
+
+#{name} must be run from a Rails application's root or have it specified
+with --chdir.
+
+If #{name} is started with --pid-file, it will fail to start if the PID
+file already exists or the contents don't match it's PID.
+      BANNER
 
       opts.separator ''
       opts.separator 'Sendmail options:'
@@ -229,6 +257,20 @@ end
               "Only check for new mail and deliver once",
               "Default: #{options[:Once]}") do |once|
         options[:Once] = once
+      end
+
+      opts.on("-p", "--pid-file [PATH]",
+              "File to store the pid in.",
+              "Defaults to /var/run/ar_sendmail.pid",
+              "when no path is given") do |pid_file|
+        pid_file ||= '/var/run/ar_sendmail/ar_sendmail.pid'
+
+        pid_dir = File.dirname pid_file
+        raise OptionParser::InvalidArgument,
+              "directory #{pid_dir} does not exist" unless
+          File.directory? pid_dir
+
+        options[:PidFile] = pid_file
       end
 
       opts.on("-d", "--daemonize",
@@ -308,6 +350,7 @@ end
       rescue LoadError
         usage op, <<-EOF
 #{name} must be run from a Rails application's root to deliver email.
+
 #{Dir.pwd} does not appear to be a Rails application root.
           EOF
       end
@@ -338,7 +381,16 @@ end
       WEBrick::Daemon.start
     end
 
-    new(options).run
+    sendmail = new options
+
+    check_pid options[:PidFile] if options.key? :PidFile
+
+    begin
+      sendmail.run
+    ensure
+      File.unlink options[:PidFile] if
+        options.key? :PidFile and $PID == File.read(options[:PidFile]).to_i
+    end
 
   rescue SystemExit
     raise
@@ -354,12 +406,13 @@ end
   # Prints a usage message to $stderr using +opts+ and exits
 
   def self.usage(opts, message = nil)
+    $stderr.puts opts
+
     if message then
-      $stderr.puts message
       $stderr.puts
+      $stderr.puts message
     end
 
-    $stderr.puts opts
     exit 1
   end
 

@@ -1,3 +1,4 @@
+require 'tmpdir'
 require 'action_mailer'
 require 'action_mailer/ar_sendmail'
 require 'rubygems'
@@ -23,10 +24,64 @@ class TestARSendmail < MiniTest::Unit::TestCase
 
     @include_c_e = ! $".grep(/config\/environment.rb/).empty?
     $" << 'config/environment.rb' unless @include_c_e
+
+    @pid_file = File.join Dir.tmpdir, "test_#{$$}_ar_sendmail.pid"
   end
 
   def teardown
     $".delete 'config/environment.rb' unless @include_c_e
+
+    File.unlink @pid_file if File.exist? @pid_file
+  end
+
+  def test_class_check_pid
+    ActionMailer::ARSendmail.check_pid @pid_file
+
+    assert File.exist?(@pid_file)
+
+    assert_equal $$, File.read(@pid_file).to_i
+  rescue SystemExit
+    flunk 'pid file teardown failed'
+  end
+
+  def test_class_check_pid_exists
+    ActionMailer::ARSendmail.check_pid @pid_file
+
+    out, err = capture_io do
+      assert_raises SystemExit do
+        ActionMailer::ARSendmail.check_pid @pid_file
+      end
+    end
+
+    assert_equal '', out
+    assert_equal "pid file exists at #{@pid_file}, exiting\n", err
+  end
+
+  def test_class_check_pid_no_match
+    def (ActionMailer::ARSendmail).open(path, mode, perm)
+      fake_io = Object.new
+      def fake_io.write(data) end
+
+      File.open path, mode, perm do |io|
+        yield fake_io
+
+        io.write 0
+      end
+    end
+
+    out, err = capture_io do
+      assert_raises SystemExit do
+        ActionMailer::ARSendmail.check_pid @pid_file
+      end
+    end
+
+    assert_equal '', out
+    assert_equal "pid 0 from #{@pid_file} doesn't match $$ #{$$}, exiting\n",
+                 err
+  ensure
+    class << ActionMailer::ARSendmail
+      send :remove_method, :open
+    end
   end
 
   def test_class_create_migration
@@ -300,6 +355,37 @@ Last send attempt: Thu Aug 10 11:40:05 2006
     assert_equal true, options[:Once]
   end
 
+  def test_class_parse_args_pid_file
+    argv = %w[]
+
+    options = ActionMailer::ARSendmail.process_args argv
+
+    refute options.key?(:PidFile), 'no --pid-file option'
+
+    argv = %w[--pid-file]
+
+    options = ActionMailer::ARSendmail.process_args argv
+
+    assert_equal '/var/run/ar_sendmail/ar_sendmail.pid', options[:PidFile]
+
+    argv = %w[--pid-file=/tmp/ar_sendmail.pid]
+
+    options = ActionMailer::ARSendmail.process_args argv
+
+    assert_equal '/tmp/ar_sendmail.pid', options[:PidFile]
+  end
+
+  def test_class_parse_args_pid_file_nonexistent
+    argv = %w[--pid-file /nonexistent/ar_sendmail.pid]
+
+    e = assert_raises OptionParser::InvalidArgument do
+      ActionMailer::ARSendmail.process_args argv
+    end
+
+    assert_equal 'invalid argument: --pid-file directory /nonexistent does not exist',
+                 e.message
+  end
+
   def test_class_parse_args_table_name
     argv = %w[-t Email]
 
@@ -331,7 +417,7 @@ Last send attempt: Thu Aug 10 11:40:05 2006
     end
 
     assert_equal '', out
-    assert_equal "hi\n\nopts\n", err
+    assert_equal "opts\n\nhi\n", err
   end
 
   def test_cleanup
