@@ -1,3 +1,4 @@
+.autotest
 History.txt
 LICENSE.txt
 Manifest.txt
