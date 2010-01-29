@@ -378,6 +378,7 @@ file already exists or the contents don't match it's PID.
 
     if options[:Daemon] then
       require 'webrick/server'
+      ActiveRecord::Base.clear_all_connections!
       WEBrick::Daemon.start
     end
 

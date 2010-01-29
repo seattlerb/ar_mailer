@@ -1,3 +1,7 @@
+=== 1.5.1
+
+* Clear ActiveRecord connections when daemonizing.  Bug by Evan Petrie.
+
 === 1.5.0
 
 * Added --pid-file option.  See --help for details.
