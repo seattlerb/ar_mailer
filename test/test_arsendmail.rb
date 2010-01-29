@@ -364,9 +364,11 @@ Last send attempt: Thu Aug 10 11:40:05 2006
 
     argv = %w[--pid-file]
 
-    options = ActionMailer::ARSendmail.process_args argv
+    e = assert_raises OptionParser::InvalidArgument do
+      options = ActionMailer::ARSendmail.process_args argv
+    end
 
-    assert_equal '/var/run/ar_sendmail/ar_sendmail.pid', options[:PidFile]
+    assert_match %r%/var/run/ar_sendmail does not exist%, e.message
 
     argv = %w[--pid-file=/tmp/ar_sendmail.pid]
 
