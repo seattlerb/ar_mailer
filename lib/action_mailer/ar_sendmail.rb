@@ -559,11 +559,8 @@ file already exists or the contents don't match it's PID.
 
     loop do
       now = Time.now
-      begin
-        cleanup
-        deliver find_emails
-      rescue ActiveRecord::Transactions::TransactionError
-      end
+      cleanup
+      deliver find_emails
       break if @once
       sleep @delay if now + @delay > Time.now
     end
